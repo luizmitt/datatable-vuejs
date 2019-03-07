@@ -1,0 +1,30 @@
+{
+  "name": "datatable-vuejs",
+  "version": "1.0.0",
+  "description": "datatable for vuejs",
+  "main": "src/dataTableComponent.js",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "bootstrap": "^4.3.1",
+    "bootstrap4": "0.0.1-security",
+    "vue": "^2.6.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luizschmitt/datatable-vuejs.git"
+  },
+  "keywords": [
+    "vuejs",
+    "datatable"
+  ],
+  "author": "Luiz Schmitt",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/luizschmitt/datatable-vuejs/issues"
+  },
+  "homepage": "https://github.com/luizschmitt/datatable-vuejs#readme"
+}
