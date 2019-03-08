@@ -1,5 +1,25 @@
 Vue.component("data-table", {
-  props: ["columns", "urlApi", "actions", "filtered", "paginator"],
+  props: {
+    columns: {
+      type: [Array, Object]
+    },
+    urlApi: {
+      type: String
+    },
+    actions: {
+      type: [Array, Object]
+    },
+    filtered: {
+      type: Boolean,
+      default: true
+    },
+    paginator: {
+      type: Object,
+      default: function() {
+        return { perPage: 15 };
+      }
+    }
+  },
   template: `
       <table class="table">
         <thead>
@@ -9,9 +29,12 @@ Vue.component("data-table", {
             </tr>
             <tr v-show="filtered">
                 <td v-for="column in table.columns">
-                    <input class="form-control" type="text" name="column.field">
-                    <td v-show="actions.length"></td>
+                    <input v-if="!column.selectbox" class="form-control" type="text" :name="column.field" v-model="filter.search[column.field]">
+                    <select v-else class="form-control select2" :name="column.field" v-model="filter.search[column.field]">
+                        <option v-for="option in column.selectbox" :name="option.id">{{option.text}}</option>
+                    </select>
                 </td>
+                <td v-show="actions.length"></td>
             </tr>
         </thead>
         
@@ -39,7 +62,7 @@ Vue.component("data-table", {
                             <li class="page-item" :class="{disabled:this.table.page <= 1}" @click="setPrevPage()">
                                 <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
                             </li>
-                            <li class="page-item" :class="{active: pageNumber == table.page}" v-for="pageNumber in table.pages.slice(table.page-1, table.page+5)" @click="table.page = pageNumber"><a class="page-link" href="#"> {{pageNumber}}</a></li>
+                            <li class="page-item" :class="{active: pageNumber == table.page}" v-for="pageNumber in table.pages.slice(table.page-1, table.page+5)" @click="setPage(pageNumber)"><a class="page-link" href="#"> {{pageNumber}}</a></li>
                             <li class="page-item"  :class="{disabled:this.table.page >= this.table.maxPage}" @click="setNextPage()">
                                 <a class="page-link" href="#">Próximo</a>
                             </li>
@@ -58,9 +81,15 @@ Vue.component("data-table", {
         actions: this.actions,
         total: 0,
         page: 1,
-        perPage: 10,
+        perPage:
+          this.paginator && this.paginator.perPage
+            ? this.paginator.perPage
+            : 10,
         maxPage: 0,
         pages: []
+      },
+      filter: {
+        search: []
       }
     };
   },
@@ -72,6 +101,19 @@ Vue.component("data-table", {
   computed: {
     displayedData() {
       return this.paginate(this.table.data);
+    },
+    "filter.search": function() {
+      console.log(this);
+      alert(1);
+      let self = this;
+      let search = self.filter.search.toLowerCase();
+      return self.table.data.filter(data => {
+        return (
+          data.id.indexOf(search) !== -1 ||
+          data.title.toLowerCase().indexOf(search) !== -1 ||
+          data.body.toLowerCase().indexOf(search) !== -1
+        );
+      });
     }
   },
   methods: {

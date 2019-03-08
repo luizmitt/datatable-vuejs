@@ -21,12 +21,12 @@
     <div id="app">
       <data-table
         :columns="[
-          { title: 'Código', field: 'id', sortable: true },
+          { title: 'Código', field: 'id', sortable: true, selectbox: [{id:1, text:'Admin'}, {id:2, text:'Suport'}]},
           { title: 'Titulo', field: 'title', sortable: true },
           { title: 'Post', field: 'body', sortable: true }
         ]"
         :filtered="true"
-        :paginator="{perPage:10}"
+        :paginator="{perPage:15}"
         :actions="[
             {label: '', icon: 'fa fa-edit', class:'btn-warning', id:['id_usuario', 'tx_cpf']},
             {label: '', icon: 'fa fa-trash', class:'btn-danger', id:['id_usuario', 'tx_cpf']}
