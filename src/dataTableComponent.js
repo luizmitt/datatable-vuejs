@@ -1,26 +1,28 @@
 Vue.component("data-table", {
-  props: {
-    columns: {
-      type: [Array, Object]
+    props: {
+        columns: {
+            type: [Array, Object]
+        },
+        urlApi: {
+            type: String
+        },
+        actions: {
+            type: [Array, Object]
+        },
+        filtered: {
+            type: Boolean,
+            default: true
+        },
+        paginator: {
+            type: Object,
+            default: function () {
+                return {
+                    perPage: 15
+                };
+            }
+        }
     },
-    urlApi: {
-      type: String
-    },
-    actions: {
-      type: [Array, Object]
-    },
-    filtered: {
-      type: Boolean,
-      default: true
-    },
-    paginator: {
-      type: Object,
-      default: function() {
-        return { perPage: 15 };
-      }
-    }
-  },
-  template: `
+    template: `
       <table class="table">
         <thead>
             <tr>
@@ -31,7 +33,7 @@ Vue.component("data-table", {
                 <td v-for="column in table.columns">
                     <input v-if="!column.selectbox" class="form-control" type="text" :name="column.field" v-model="filter.search[column.field]">
                     <select v-else class="form-control select2" :name="column.field" v-model="filter.search[column.field]">
-                        <option v-for="option in column.selectbox" :name="option.id">{{option.text}}</option>
+                        <option v-for="option in column.selectbox" :name="option.id">{{option.name}}</option>
                     </select>
                 </td>
                 <td v-show="actions.length"></td>
@@ -67,99 +69,108 @@ Vue.component("data-table", {
                                 <a class="page-link" href="#">Próximo</a>
                             </li>
                         </ul>
+                        <input v-model="table.page">
                     </nav>
                 </td>
             </tr>
         </tfoot>
       </table>
     `,
-  data: function() {
-    return {
-      table: {
-        columns: this.columns,
-        data: this.urlApi,
-        actions: this.actions,
-        total: 0,
-        page: 1,
-        perPage:
-          this.paginator && this.paginator.perPage
-            ? this.paginator.perPage
-            : 10,
-        maxPage: 0,
-        pages: []
-      },
-      filter: {
-        search: []
-      }
-    };
-  },
-  watch: {
-    "table.data": function() {
-      this.setPages();
-    }
-  },
-  computed: {
-    displayedData() {
-      return this.paginate(this.table.data);
+    data: function () {
+        return {
+            table: {
+                columns: this.columns,
+                data: this.urlApi,
+                actions: this.actions,
+                total: 0,
+                page: 1,
+                perPage: 10,
+                maxPage: 0,
+                pages: []
+            },
+            filter: {
+                search: []
+            }
+        };
     },
-    "filter.search": function() {
-      console.log(this);
-      alert(1);
-      let self = this;
-      let search = self.filter.search.toLowerCase();
-      return self.table.data.filter(data => {
-        return (
-          data.id.indexOf(search) !== -1 ||
-          data.title.toLowerCase().indexOf(search) !== -1 ||
-          data.body.toLowerCase().indexOf(search) !== -1
-        );
-      });
-    }
-  },
-  methods: {
-    getData() {
-      axios
-        .get(this.table.data)
-        .then(resp => {
-          this.table.data = resp.data;
-        })
-        .catch(error => {});
+    watch: {
+        "table.data": function () {
+            this.setPages();
+        },
+        "filter.search": function () {
+            let self = this;
+            let search = self.filter.search.toLowerCase();
+            return self.table.data.filter(data => {
+                return (
+                    data.id.indexOf(search) !== -1 ||
+                    data.title.toLowerCase().indexOf(search) !== -1 ||
+                    data.body.toLowerCase().indexOf(search) !== -1
+                );
+            });
+        }
     },
-    setPages() {
-      this.table.maxPage = Math.ceil(
-        this.table.data.length / this.table.perPage
-      );
+    computed: {
+        displayedData() {
+            return this.paginate(this.table.data);
+        }
+    },
+    methods: {
+        getData() {
+            axios
+                .get(this.table.data)
+                .then(resp => {
+                    this.table.data = resp.data;
+                })
+                .catch(error => {});
 
-      for (let index = 1; index <= this.table.maxPage; index++) {
-        this.table.pages.push(index);
-      }
+            this.table.columns.filter(data => {
+                //data = JSON.parse(JSON.stringify(data));
+                if (data.selectbox != undefined) {
+                    switch (typeof data.selectbox) {
+                        case 'string':
+                            axios.get(data.selectbox).then(resp => {
+                                data.selectbox = resp.data;
+                            });
+                            break;
+                    }
+                }
+            })
+        },
+        setPages() {
+            this.table.maxPage = Math.ceil(
+                this.table.data.length / this.table.perPage
+            );
+
+            for (let index = 1; index <= this.table.maxPage; index++) {
+                this.table.pages.push(index);
+            }
+        },
+        paginate(data) {
+            let page = this.table.page;
+            let perPage = this.table.perPage;
+            let from = page * perPage - perPage;
+            let to = page * perPage;
+            return data.slice(from, to);
+        },
+        setPrevPage() {
+            if (this.table.page - this.table.perPage <= 1) {
+                this.table.page = 1;
+            } else {
+                this.table.page -= this.table.perPage;
+            }
+        },
+        setNextPage() {
+            if (this.table.page + this.table.perPage >= this.table.maxPage) {
+                this.table.page = this.table.maxPage;
+            } else {
+                this.table.page += this.table.perPage;
+            }
+        },
+        setPage(page) {
+            this.table.page = page;
+        }
     },
-    paginate(data) {
-      let page = this.table.page;
-      let perPage = this.table.perPage;
-      let from = page * perPage - perPage;
-      let to = page * perPage;
-      return data.slice(from, to);
-    },
-    setPrevPage() {
-      if (this.table.page - this.table.perPage <= 1) {
-        this.table.page = 1;
-      } else {
-        this.table.page -= this.table.perPage;
-      }
-    },
-    setNextPage() {
-      if (this.table.page + this.table.perPage >= this.table.maxPage) {
-        this.table.page = this.table.maxPage;
-      } else {
-        this.table.page += this.table.perPage;
-      }
-    },
-    setPage(page) {
-      this.table.page = page;
+    mounted() {
+        this.getData();
     }
-  },
-  mounted() {
-    this.getData();
-  }
 });
