@@ -23,6 +23,7 @@ Vue.component("data-table", {
         }
     },
     template: `
+        <form>
       <table class="table">
         <thead>
             <tr>
@@ -30,10 +31,10 @@ Vue.component("data-table", {
                 <th v-show="actions.length">Ações</th>
             </tr>
             <tr v-show="filtered">
-                <td v-for="column in table.columns">
-                    <input v-if="!column.selectbox" class="form-control" type="text" :name="column.field" v-model="filter.search[column.field]">
-                    <select v-else class="form-control select2" :name="column.field" v-model="filter.search[column.field]">
-                        <option v-for="option in column.selectbox" :name="option.id">{{option.name}}</option>
+                <td v-for="column, index in table.columns" >
+                    <input v-if="!column.selectbox" class="form-control" type="text" :name="column.field" v-model="filter.searchValues[index]">
+                    <select v-else class="form-control select2" :name="column.field" v-model="filter.searchValues[index]">
+                        <option v-for="option in column.selectbox" :name="column.field" :value="option.id">{{option.text}}</option>
                     </select>
                 </td>
                 <td v-show="actions.length"></td>
@@ -75,6 +76,7 @@ Vue.component("data-table", {
             </tr>
         </tfoot>
       </table>
+      </form>
     `,
     data: function () {
         return {
@@ -89,7 +91,9 @@ Vue.component("data-table", {
                 pages: []
             },
             filter: {
-                search: []
+                searchColumns: [],
+                searchValues: [],
+                data: []
             }
         };
     },
@@ -97,21 +101,24 @@ Vue.component("data-table", {
         "table.data": function () {
             this.setPages();
         },
-        "filter.search": function () {
-            let self = this;
-            let search = self.filter.search.toLowerCase();
-            return self.table.data.filter(data => {
-                return (
-                    data.id.indexOf(search) !== -1 ||
-                    data.title.toLowerCase().indexOf(search) !== -1 ||
-                    data.body.toLowerCase().indexOf(search) !== -1
-                );
-            });
+        "filter.data": function () {
+            this.setPages();
+        },
+
+        "filter.searchValues": function () {
+            let search = this.mergeArrayByIndex(
+                this.filter.searchColumns,
+                this.filter.searchValues
+            );
+
+            columns = Object.keys(search).filter(field => search[field]);
+            this.filter.data = this.table.data.filter(data => columns.every(field => data[field].toString().toLowerCase().indexOf(search[field]) !== -1));
         }
     },
     computed: {
         displayedData() {
-            return this.paginate(this.table.data);
+            this.filter.data = this.filter.data.length ? this.filter.data : this.table.data;
+            return this.paginate(this.filter.data);
         }
     },
     methods: {
@@ -119,26 +126,27 @@ Vue.component("data-table", {
             axios
                 .get(this.table.data)
                 .then(resp => {
-                    this.table.data = resp.data;
+                    this.filter.data = this.table.data = resp.data;
                 })
                 .catch(error => {});
 
             this.table.columns.filter(data => {
-                //data = JSON.parse(JSON.stringify(data));
+                this.filter.searchColumns.push(data.field);
                 if (data.selectbox != undefined) {
                     switch (typeof data.selectbox) {
-                        case 'string':
+                        case "string":
                             axios.get(data.selectbox).then(resp => {
                                 data.selectbox = resp.data;
                             });
                             break;
                     }
                 }
-            })
+            });
         },
         setPages() {
+            this.table.pages = [];
             this.table.maxPage = Math.ceil(
-                this.table.data.length / this.table.perPage
+                this.filter.data.length / this.table.perPage
             );
 
             for (let index = 1; index <= this.table.maxPage; index++) {
@@ -168,6 +176,14 @@ Vue.component("data-table", {
         },
         setPage(page) {
             this.table.page = page;
+        },
+        mergeArrayByIndex(array1, array2) {
+            var obj = {};
+            array1.map((e, i) => {
+                if (array2[i] == undefined) array2[i] = "";
+                obj[e] = array2[i];
+            });
+            return obj;
         }
     },
     mounted() {
