@@ -37,15 +37,20 @@ Vue.component("data-table", {
                     </div>
                     <div class="col-md-6 text-right">
                         <div class="btn-group">
+                            <button type="button" class="btn btn-default" :style="[filtered ? {'color':'#bbb'} : {'color':'#000'}]" @click="withFiltered()">
+                                <i class="fa fa-filter"></i>
+                            
+                            </button>
                             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-cogs"></i>
                             </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="#">Action</a>
-                                <a class="dropdown-item" href="#">Another action</a>
-                                <a class="dropdown-item" href="#">Something else here</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#">Separated link</a>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <div class="form-check" v-for="column, index in table.columns">
+                                    <input class="form-check-input" type="checkbox" :checked="isVisibleColumn(column)" @click="showColumn(column)">
+                                    <label class="form-check-label" for="defaultCheck1">
+                                        {{column.title}}
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -59,14 +64,14 @@ Vue.component("data-table", {
                 <th v-show="checkable">
                     <input type="checkbox">
                 </th>            
-                <th v-for="column in table.columns">{{column.title}}</th>
+                <th v-for="column in table.columns" v-if="column.visible">{{column.title}}<i v-if="column.sortable" class="fa fa-sort" style="float:right"></i></th>
                 <th v-show="actions.length">Ações</th>
             </tr>
             <tr v-show="filtered">
                 <td v-show="checkable">
                     
                 </td>
-                <td v-for="column, index in table.columns" >
+                <td v-for="column, index in table.columns" v-if="column.visible">
                     <input v-if="!column.selectbox" class="form-control" type="text" :name="column.field" v-model="filter.searchValues[index]">
                     <select v-else class="form-control select2" :name="column.field" v-model="filter.searchValues[index]">
                         <option v-for="option in column.selectbox" :name="column.field" :value="option.id">{{option.text}}</option>
@@ -85,7 +90,7 @@ Vue.component("data-table", {
                 <td v-show="checkable">
                     <input type="checkbox" name="selection[]">
                 </td>
-                <td v-for="column in table.columns">{{row[column.field]}}</td>
+                <td v-for="column in table.columns" v-if="column.visible">{{row[column.field]}}</td>
                 <td v-show="actions.length">
                     <div class="btn-group">
                     <button class="btn" :class="action.class" v-for="action in actions">
@@ -100,18 +105,31 @@ Vue.component("data-table", {
         <tfoot>
             <tr>
                 <td colspan="100%">
-                    <nav aria-label="Pagination" v-show="table.data.length > table.perPage">
-                        <ul class="pagination justify-content-end">
-                            <li class="page-item" :class="{disabled:this.table.page <= 1}" @click="setPrevPage()">
-                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
-                            </li>
-                            <li class="page-item" :class="{active: pageNumber == table.page}" v-for="pageNumber in table.pages.slice(table.page-1, table.page+5)" @click="setPage(pageNumber)"><a class="page-link" href="#"> {{pageNumber}}</a></li>
-                            <li class="page-item"  :class="{disabled:this.table.page >= this.table.maxPage}" @click="setNextPage()">
-                                <a class="page-link" href="#">Próximo</a>
-                            </li>
-                        </ul>
-                        <input v-model="table.page">
-                    </nav>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <select v-model="table.perPage">
+                                <option value="10" selected>10</option>
+                                <option value="30">30</option>
+                                <option value="60">60</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 text-right">
+                            <nav aria-label="Pagination" v-show="table.data.length > table.perPage">
+                                <ul class="pagination justify-content-end">
+                                    <li class="page-item" :class="{disabled:this.table.page <= 1}" @click="setPrevPage()">
+                                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
+                                    </li>
+                                    <li class="page-item" :class="{active: pageNumber == table.page}" v-for="pageNumber in table.pages.slice(table.page-1, table.page+5)" @click="setPage(pageNumber)"><a class="page-link" href="#"> {{pageNumber}}</a></li>
+                                    <li class="page-item"  :class="{disabled:this.table.page >= this.table.maxPage}" @click="setNextPage()">
+                                        <a class="page-link" href="#">Próximo</a>
+                                    </li>
+                                </ul>
+                                <input v-model="table.page">
+                            </nav>
+                        </div>
+                    </div>
+
                 </td>
             </tr>
         </tfoot>
@@ -134,7 +152,8 @@ Vue.component("data-table", {
             filter: {
                 searchColumns: [],
                 searchValues: [],
-                data: []
+                data: [],
+                checkedColumns: []
             }
         };
     },
@@ -144,6 +163,7 @@ Vue.component("data-table", {
         },
         "filter.data": function () {
             this.setPages();
+            options.visible = !options.visible;
         },
 
         "filter.searchValues": function () {
@@ -154,6 +174,12 @@ Vue.component("data-table", {
 
             columns = Object.keys(search).filter(field => search[field]);
             this.filter.data = this.table.data.filter(data => columns.every(field => data[field].toString().toLowerCase().indexOf(search[field]) !== -1));
+        },
+
+        "columns": function (options) {
+            if (options.visible == undefined) {
+                options.visible = true;
+            }
         }
     },
     computed: {
@@ -225,6 +251,15 @@ Vue.component("data-table", {
                 obj[e] = array2[i];
             });
             return obj;
+        },
+        showColumn(obj) {
+            obj.visible = !obj.visible;
+        },
+        isVisibleColumn(obj) {
+            return obj.visible;
+        },
+        withFiltered() {
+            this.filtered = !this.filtered;
         }
     },
     beforeUpdate() {
