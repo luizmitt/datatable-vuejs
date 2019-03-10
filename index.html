@@ -19,7 +19,8 @@
           { title: 'Post', field: 'body', sortable: true },
           { title: 'Usuário', field: 'userId', selectbox: 'https://jsonplaceholder.typicode.com/users'}
         ]"
-      :filtered="true" :paginator="{perPage:15}" :actions="[
+      :filtered="true" :checkable="true" :paginator="{perPage:15}" :actions="[
+            {label: '', icon: 'fa fa-list-ul', class:'btn-info', id:['id_usuario', 'tx_cpf']},
             {label: '', icon: 'fa fa-edit', class:'btn-warning', id:['id_usuario', 'tx_cpf']},
             {label: '', icon: 'fa fa-trash', class:'btn-danger', id:['id_usuario', 'tx_cpf']}
         ]"

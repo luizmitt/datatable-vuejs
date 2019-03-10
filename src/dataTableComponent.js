@@ -13,6 +13,10 @@ Vue.component("data-table", {
             type: Boolean,
             default: true
         },
+        checkable: {
+            type: Boolean,
+            default: true
+        },
         paginator: {
             type: Object,
             default: function () {
@@ -23,14 +27,45 @@ Vue.component("data-table", {
         }
     },
     template: `
-        <form>
-      <table class="table">
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-default">
+                            <i class="fa fa-plus"></i> Novo Registro
+                        </button>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-cogs"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#">Action</a>
+                                <a class="dropdown-item" href="#">Another action</a>
+                                <a class="dropdown-item" href="#">Something else here</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#">Separated link</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="padding:0 !important">
+
+      <table class="table table-striped table-hover">
         <thead>
             <tr>
+                <th v-show="checkable">
+                    <input type="checkbox">
+                </th>            
                 <th v-for="column in table.columns">{{column.title}}</th>
                 <th v-show="actions.length">Ações</th>
             </tr>
             <tr v-show="filtered">
+                <td v-show="checkable">
+                    
+                </td>
                 <td v-for="column, index in table.columns" >
                     <input v-if="!column.selectbox" class="form-control" type="text" :name="column.field" v-model="filter.searchValues[index]">
                     <select v-else class="form-control select2" :name="column.field" v-model="filter.searchValues[index]">
@@ -47,12 +82,17 @@ Vue.component("data-table", {
             </tr>
             
             <tr v-else v-for="row in displayedData">
+                <td v-show="checkable">
+                    <input type="checkbox" name="selection[]">
+                </td>
                 <td v-for="column in table.columns">{{row[column.field]}}</td>
                 <td v-show="actions.length">
+                    <div class="btn-group">
                     <button class="btn" :class="action.class" v-for="action in actions">
                         <i v-show="action.icon" :class="action.icon"></i>
                         {{action.label}}
                     </button>
+                    </div>
                 </td>
             </tr>
         </tbody>
@@ -76,7 +116,8 @@ Vue.component("data-table", {
             </tr>
         </tfoot>
       </table>
-      </form>
+      </div>
+      </div>
     `,
     data: function () {
         return {
@@ -186,6 +227,13 @@ Vue.component("data-table", {
             return obj;
         }
     },
+    beforeUpdate() {
+        console.log("atualizando")
+    },
+    updated() {
+        console.log("atualizado!")
+    },
+
     mounted() {
         this.getData();
     }
