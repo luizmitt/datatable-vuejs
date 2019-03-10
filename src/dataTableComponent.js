@@ -31,7 +31,7 @@ Vue.component("data-table", {
             <div class="card-header">
                 <div class="row">
                     <div class="col-md-6">
-                        <button type="button" class="btn btn-default">
+                        <button type="button" class="btn btn-secondary">
                             <i class="fa fa-plus"></i> Novo Registro
                         </button>
                     </div>
@@ -77,7 +77,17 @@ Vue.component("data-table", {
                         <option v-for="option in column.selectbox" :name="column.field" :value="option.id">{{option.text}}</option>
                     </select>
                 </td>
-                <td v-show="actions.length"></td>
+                <td v-show="actions.length">
+                    <div class="group-btn">
+                        <button class="btn btn-default">
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <button class="btn btn-default" type="button" @click.prevent="getData()">
+                            <i class="fa fa-sync"></i>
+                        </button>
+                    </div>
+                </td>
             </tr>
         </thead>
         
@@ -107,12 +117,14 @@ Vue.component("data-table", {
                 <td colspan="100%">
                     <div class="row">
                         <div class="col-md-12">
+                            total de <b>{{table.total}}</b> registros, 
                             <select v-model="table.perPage">
                                 <option value="10" selected>10</option>
                                 <option value="30">30</option>
                                 <option value="60">60</option>
                                 <option value="100">100</option>
                             </select>
+                            por página.
                         </div>
                         <div class="col-md-12 text-right">
                             <nav aria-label="Pagination" v-show="table.data.length > table.perPage">
@@ -193,6 +205,7 @@ Vue.component("data-table", {
                 .get(this.table.data)
                 .then(resp => {
                     this.filter.data = this.table.data = resp.data;
+                    this.table.total = this.table.data.length;
                 })
                 .catch(error => {});
 
