@@ -64,7 +64,7 @@ Vue.component("data-table", {
                 <th v-show="checkable">
                     <input type="checkbox">
                 </th>            
-                <th v-for="column in table.columns" v-if="column.visible">{{column.title}}<i v-if="column.sortable" class="fa fa-sort" style="float:right"></i></th>
+                <th v-for="column in table.columns" v-if="column.visible">{{column.title}}<i v-if="column.sortable" :ref="'sort_'+column.field" @click="sortColumn(column.field)" class="fa fa-sort" style="float:right"></i></th>
                 <th v-show="actions.length">Ações</th>
             </tr>
             <tr v-show="filtered">
@@ -163,7 +163,6 @@ Vue.component("data-table", {
         },
         "filter.data": function () {
             this.setPages();
-            options.visible = !options.visible;
         },
 
         "filter.searchValues": function () {
@@ -252,6 +251,26 @@ Vue.component("data-table", {
             });
             return obj;
         },
+        compareValues(key, order = 'asc') {
+            return function (a, b) {
+                if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+                    return 0;
+                }
+
+                const varA = (typeof a[key] === 'string') ? a[key].toUpperCase() : a[key];
+                const varB = (typeof b[key] === 'string') ? b[key].toUpperCase() : b[key];
+
+                let comparison = 0;
+
+                if (varA > varB) {
+                    comparison = 1;
+                } else if (varA < varB) {
+                    comparison = -1;
+                }
+
+                return (order == 'desc') ? (comparison * -1) : comparison
+            };
+        },
         showColumn(obj) {
             obj.visible = !obj.visible;
         },
@@ -260,7 +279,18 @@ Vue.component("data-table", {
         },
         withFiltered() {
             this.filtered = !this.filtered;
-        }
+        },
+        sortColumn(column, dir = 'asc') {
+            let className = this.$refs['sort_' + column][0].className;
+            if (className.toString().toLowerCase().indexOf("sort_asc") !== -1) {
+                dir = 'asc';
+                this.$refs['sort_' + column][0].className = 'sort_desc fa fa-sort-up';
+            } else {
+                dir = 'desc';
+                this.$refs['sort_' + column][0].className = 'sort_asc fa fa-sort-down';
+            }
+            this.filter.data.sort(this.compareValues(column, dir))
+        },
     },
     beforeUpdate() {
         console.log("atualizando")
