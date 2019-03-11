@@ -13,18 +13,28 @@
 
 <body>
   <div id="app">
+
+
+
     <data-table :columns="[
           { title: 'Código', field: 'id', visible:true, sortable: true, selectbox: [{id:1, text:'Admin'}, {id:2, text:'Suport'}]},
           { title: 'Titulo', field: 'title', visible:true, sortable: true },
           { title: 'Post', field: 'body', visible:true, sortable: false },
           { title: 'Usuário', field: 'userId', visible:false, selectbox: 'https://jsonplaceholder.typicode.com/users'}
         ]"
-      :filtered="true" :checkable="true" :paginator="{perPage:15}" :actions="[
+      :filtered="false" :checkable="true" :paginator="{perPage:15}" :actions="[
             {label: '', icon: 'fa fa-list-ul', class:'btn-info', id:['id_usuario', 'tx_cpf']},
             {label: '', icon: 'fa fa-edit', class:'btn-warning', id:['id_usuario', 'tx_cpf']},
             {label: '', icon: 'fa fa-trash', class:'btn-danger', id:['id_usuario', 'tx_cpf']}
         ]"
-      url-api="https://jsonplaceholder.typicode.com/posts"></data-table>
+      url-api="https://jsonplaceholder.typicode.com/posts">
+
+      <data-modal slot="modal1"></data-modal>
+
+    </data-table>
+
+
+
   </div>
 </body>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
@@ -36,7 +46,7 @@
 <script type="text/javascript" src="node_modules/vue/dist/vue.js"></script>
 <script type="text/javascript" src="node_modules/axios/dist/axios.min.js"></script>
 <script type="text/javascript" src="src/dataTableComponent.js"></script>
-<script type="text/javascript" src="src/dataModelComponent.js"></script>
+<script type="text/javascript" src="src/dataModalComponent.js"></script>
 <script type="text/javascript">
   new Vue({
     el: "#app"

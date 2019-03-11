@@ -96,6 +96,10 @@ Vue.component("data-table", {
                 <td colspan="100%">Nenhum registro encontrado.</td>
             </tr>
             
+            <tr v-else-if="table.loading && !displayedData.length">
+                <td colspan="100%">Carregando....</td>
+            </tr>
+
             <tr v-else v-for="row in displayedData">
                 <td v-show="checkable">
                     <input type="checkbox" name="selection[]">
@@ -147,6 +151,7 @@ Vue.component("data-table", {
         </tfoot>
       </table>
       </div>
+      <slot name="modal1"/>
       </div>
     `,
     data: function () {
@@ -159,7 +164,8 @@ Vue.component("data-table", {
                 page: 1,
                 perPage: 10,
                 maxPage: 0,
-                pages: []
+                pages: [],
+                loading: false
             },
             filter: {
                 searchColumns: [],
@@ -233,6 +239,10 @@ Vue.component("data-table", {
             }
         },
         paginate(data) {
+            if (typeof data != "object") {
+                return [];
+            }
+
             let page = this.table.page;
             let perPage = this.table.perPage;
             let from = page * perPage - perPage;
@@ -295,6 +305,11 @@ Vue.component("data-table", {
         },
         sortColumn(column, dir = 'asc') {
             let className = this.$refs['sort_' + column][0].className;
+
+            document.querySelectorAll(".fa-sort-down, .fa-sort-up").forEach(el => {
+                el.className = 'fa fa-sort'
+            });
+
             if (className.toString().toLowerCase().indexOf("sort_asc") !== -1) {
                 dir = 'asc';
                 this.$refs['sort_' + column][0].className = 'sort_desc fa fa-sort-up';
@@ -306,13 +321,14 @@ Vue.component("data-table", {
         },
     },
     beforeUpdate() {
-        console.log("atualizando")
+        this.table.loading = true
     },
     updated() {
-        console.log("atualizado!")
+        //this.table.loading = false
     },
 
     mounted() {
         this.getData();
+        console.log(this.displayedData);
     }
 });

@@ -1,1 +1,0 @@
-Vue.component("data-model", {});
